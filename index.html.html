@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Suyash Barge — Studio Manager & Visual Designer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#05040f;
+    --bg2:#0a0818;
+    --card:#0f0d1f;
+    --card2:#131228;
+    --indigo:#6366f1;
+    --pink:#ec4899;
+    --cyan:#22d3ee;
+    --amber:#f59e0b;
+    --violet:#7c3aed;
+    --white:#f0eeff;
+    --muted:#8b85b0;
+    --border:rgba(99,102,241,0.15);
+    --glow-i:rgba(99,102,241,0.35);
+    --glow-p:rgba(236,72,153,0.35);
+    --glow-c:rgba(34,211,238,0.3);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;font-size:16px;}
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg);
+    color:var(--white);
+    overflow-x:hidden;
+    cursor:none;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none;z-index:9999;opacity:.45;
+  }
+
+  /* ── CURSOR ── */
+  #cursor{position:fixed;width:10px;height:10px;border-radius:50%;background:var(--cyan);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:transform .1s,background .2s;box-shadow:0 0 12px var(--cyan),0 0 24px var(--cyan);}
+  #cursor-ring{position:fixed;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(34,211,238,.55);pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:all .18s ease;}
+
+  /* ── CANVAS ── */
+  #particles{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+  /* ── LOADER ── */
+  #loader{
+    position:fixed;inset:0;background:var(--bg);z-index:99990;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+    transition:opacity .7s ease,visibility .7s ease;
+  }
+  #loader.hidden{opacity:0;visibility:hidden;}
+  .loader-initials{
+    font-family:'Syne',sans-serif;font-size:clamp(4rem,10vw,7rem);font-weight:800;letter-spacing:-4px;
+    background:linear-gradient(135deg,var(--indigo),var(--pink),var(--cyan));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    animation:pulse 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes pulse{from{filter:brightness(1)}to{filter:brightness(1.4)}}
+  .loader-bar-wrap{width:220px;height:3px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;}
+  .loader-bar{height:100%;width:0;background:linear-gradient(90deg,var(--indigo),var(--pink),var(--cyan));border-radius:10px;animation:loadBar 2s ease forwards;}
+  @keyframes loadBar{to{width:100%}}
+  .loader-label{font-size:.78rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+
+  /* ── NAVBAR ── */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:1000;
+    padding:18px 6vw;display:flex;align-items:center;justify-content:space-between;
+    background:rgba(5,4,15,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+    transition:all .3s;
+  }
+  .nav-logo{
+    font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-0.5px;
+    background:linear-gradient(135deg,var(--indigo),var(--pink));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .nav-links{display:flex;gap:36px;list-style:none;}
+  .nav-links a{
+    font-size:.82rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);text-decoration:none;
+    position:relative;padding-bottom:4px;transition:color .2s;
+  }
+  .nav-links a::after{
+    content:'';position:absolute;bottom:0;left:0;width:0;height:1.5px;
+    background:linear-gradient(90deg,var(--indigo),var(--cyan));
+    transition:width .3s ease;
+  }
+  .nav-links a:hover{color:var(--white);}
+  .nav-links a:hover::after{width:100%;}
+  .nav-cta{
+    padding:8px 20px;border-radius:30px;font-size:.8rem;font-weight:600;letter-spacing:1px;
+    background:linear-gradient(135deg,var(--indigo),var(--violet));
+    color:#fff;text-decoration:none;transition:all .3s;box-shadow:0 0 20px var(--glow-i);
+  }
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 0 35px var(--glow-i);}
+  .hamburger{display:none;flex-direction:column;gap:5px;cursor:none;background:none;border:none;padding:4px;}
+  .hamburger span{width:24px;height:2px;background:var(--white);border-radius:2px;transition:all .3s;}
+
+  /* ── SECTION BASE ── */
+  section{position:relative;z-index:1;padding:100px 6vw;}
+  .section-label{
+    font-size:.72rem;letter-spacing:4px;text-transform:uppercase;color:var(--cyan);
+    margin-bottom:12px;display:flex;align-items:center;gap:10px;
+  }
+  .section-label::before{content:'';display:inline-block;width:32px;height:1.5px;background:var(--cyan);}
+  .section-title{
+    font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:800;
+    letter-spacing:-1.5px;line-height:1.1;margin-bottom:60px;
+  }
+  .gradient-text{
+    background:linear-gradient(135deg,var(--indigo) 0%,var(--pink) 50%,var(--cyan) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+
+  /* ── HERO ── */
+  #hero{
+    min-height:100vh;display:flex;align-items:center;
+    padding-top:120px;gap:60px;flex-wrap:wrap;
+    background:radial-gradient(ellipse 70% 60% at 10% 50%, rgba(99,102,241,.1) 0%, transparent 65%),
+               radial-gradient(ellipse 50% 40% at 90% 20%, rgba(236,72,153,.08) 0%, transparent 60%);
+  }
+  .hero-content{flex:1;min-width:280px;}
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 16px;border-radius:30px;border:1px solid var(--border);
+    background:rgba(99,102,241,.08);margin-bottom:28px;font-size:.78rem;color:var(--muted);
+  }
+  .hero-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:blinkDot 1.5s infinite;}
+  @keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.3}}
+  .hero-name{
+    font-family:'Syne',sans-serif;font-size:clamp(2.8rem,7vw,5.5rem);font-weight:800;
+    letter-spacing:-3px;line-height:1;margin-bottom:16px;
+    background:linear-gradient(135deg,#fff 0%,var(--indigo) 40%,var(--pink) 70%,var(--cyan) 100%);
+    background-size:200% 200%;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    animation:shimmer 4s linear infinite;
+  }
+  @keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .hero-role{font-size:clamp(1rem,2vw,1.25rem);color:var(--muted);font-weight:400;margin-bottom:28px;line-height:1.6;}
+  .hero-role span{color:var(--pink);font-weight:600;}
+  .hero-desc{font-size:.95rem;color:var(--muted);line-height:1.8;max-width:500px;margin-bottom:40px;}
+  .hero-btns{display:flex;gap:16px;flex-wrap:wrap;}
+  .btn-primary{
+    padding:14px 32px;border-radius:50px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+    background:linear-gradient(135deg,var(--indigo),var(--pink));
+    color:#fff;text-decoration:none;border:none;cursor:none;
+    box-shadow:0 0 30px var(--glow-i),0 0 60px rgba(236,72,153,.15);
+    transition:all .3s;position:relative;overflow:hidden;
+  }
+  .btn-primary::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,var(--pink),var(--cyan));opacity:0;transition:opacity .3s;
+  }
+  .btn-primary:hover::before{opacity:1;}
+  .btn-primary span{position:relative;z-index:1;}
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 0 50px var(--glow-i);}
+  .btn-outline{
+    padding:14px 32px;border-radius:50px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+    background:transparent;color:var(--white);text-decoration:none;
+    border:1.5px solid rgba(99,102,241,.5);
+    transition:all .3s;cursor:none;
+  }
+  .btn-outline:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 25px var(--glow-c);transform:translateY(-3px);}
+
+  /* STATS CARD */
+  .hero-stats-wrap{flex:0 0 auto;}
+  .hero-stats{
+    background:rgba(15,13,31,.8);backdrop-filter:blur(20px);
+    border:1px solid var(--border);border-radius:24px;padding:32px 28px;
+    display:grid;grid-template-columns:1fr 1fr;gap:24px;min-width:280px;
+    box-shadow:0 0 60px rgba(99,102,241,.1),0 30px 80px rgba(0,0,0,.5);
+    transform-style:preserve-3d;transition:transform .4s ease;
+  }
+  .stat-item{display:flex;flex-direction:column;gap:4px;}
+  .stat-num{
+    font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-2px;
+    background:linear-gradient(135deg,var(--indigo),var(--cyan));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .stat-num.pink{background:linear-gradient(135deg,var(--pink),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .stat-label{font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .stat-divider{grid-column:1/-1;height:1px;background:var(--border);}
+
+  /* ── ABOUT ── */
+  #about{background:radial-gradient(ellipse 60% 50% at 85% 50%, rgba(56,189,248,.07) 0%, transparent 65%);}
+  .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+  .about-visual{
+    position:relative;aspect-ratio:1;max-width:400px;
+  }
+  .about-ring{
+    position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, var(--indigo), var(--pink), var(--cyan), var(--indigo));
+    padding:3px;animation:spin 8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .about-ring-inner{
+    background:var(--bg);border-radius:50%;width:100%;height:100%;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .about-avatar{
+    width:85%;height:85%;border-radius:50%;
+    background:linear-gradient(135deg,var(--card),var(--card2));
+    display:flex;align-items:center;justify-content:center;font-size:6rem;
+    border:2px solid var(--border);
+  }
+  .about-text .section-label{margin-bottom:8px;}
+  .about-text p{color:var(--muted);line-height:1.85;font-size:.95rem;margin-bottom:16px;}
+  .about-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;}
+  .about-tag{
+    padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:500;
+    border:1px solid var(--border);background:rgba(99,102,241,.07);color:var(--muted);
+    transition:all .2s;
+  }
+  .about-tag:hover{border-color:var(--cyan);color:var(--indigo);}
+
+  /* ── SKILLS ── */
+  #skills{background:radial-gradient(ellipse 50% 60% at 20% 50%, rgba(2,132,199,.09) 0%, transparent 65%);}
+  .skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;}
+  .skill-group-title{
+    font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:2px;
+    text-transform:uppercase;color:var(--white);margin-bottom:28px;
+  }
+  .skill-bar-wrap{margin-bottom:22px;}
+  .skill-bar-header{display:flex;justify-content:space-between;margin-bottom:8px;}
+  .skill-name{font-size:.85rem;font-weight:500;color:var(--white);}
+  .skill-pct{font-size:.78rem;color:var(--muted);}
+  .skill-track{height:6px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden;}
+  .skill-fill{
+    height:100%;border-radius:10px;width:0;
+    transition:width 1.4s cubic-bezier(.4,0,.2,1);
+  }
+  .fill-indigo{background:linear-gradient(90deg,var(--violet),var(--indigo));}
+  .fill-pink{background:linear-gradient(90deg,var(--pink),var(--amber));}
+  .fill-cyan{background:linear-gradient(90deg,var(--cyan),var(--indigo));}
+  .chips-section{margin-top:48px;}
+  .chips-section .skill-group-title{margin-bottom:20px;}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;}
+  .chip{
+    padding:8px 16px;border-radius:30px;font-size:.78rem;font-weight:500;letter-spacing:.5px;
+    border:1px solid var(--border);background:rgba(15,13,31,.9);color:var(--muted);
+    transition:all .25s;cursor:default;
+  }
+  .chip:hover{background:rgba(99,102,241,.12);border-color:var(--indigo);color:var(--white);transform:translateY(-2px);}
+  .chip.hot{border-color:rgba(236,72,153,.35);color:var(--pink);background:rgba(236,72,153,.06);}
+  .chip.hot:hover{background:rgba(236,72,153,.15);border-color:var(--pink);}
+
+  /* ── EXPERIENCE ── */
+  #experience{background:radial-gradient(ellipse 55% 55% at 85% 50%, rgba(2,132,199,.09) 0%, transparent 65%);}
+  .timeline{position:relative;padding-left:36px;}
+  .timeline::before{
+    content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;
+    background:linear-gradient(to bottom, var(--indigo), var(--pink), var(--cyan));
+    border-radius:2px;
+  }
+  .timeline-item{
+    position:relative;margin-bottom:52px;opacity:0;transform:translateX(-30px);
+    transition:all .7s ease;
+  }
+  .timeline-item.revealed{opacity:1;transform:translateX(0);}
+  .timeline-dot{
+    position:absolute;left:-36px;top:4px;width:16px;height:16px;border-radius:50%;
+    background:linear-gradient(135deg,var(--indigo),var(--pink));
+    box-shadow:0 0 16px var(--glow-i);
+  }
+  .timeline-card{
+    background:rgba(15,13,31,.8);border:1px solid var(--border);border-radius:20px;
+    padding:28px 32px;backdrop-filter:blur(10px);
+    transition:all .3s;transform-style:preserve-3d;
+  }
+  .timeline-card:hover{
+    border-color:rgba(99,102,241,.4);
+    box-shadow:0 0 40px rgba(99,102,241,.12),0 20px 60px rgba(0,0,0,.4);
+    transform:translateY(-4px);
+  }
+  .tc-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px;}
+  .tc-company{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--white);}
+  .tc-period{
+    font-size:.72rem;letter-spacing:2px;text-transform:uppercase;
+    padding:4px 12px;border-radius:20px;
+    background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--cyan);
+  }
+  .tc-role{font-size:.88rem;font-weight:600;color:var(--pink);margin-bottom:10px;}
+  .tc-desc{font-size:.87rem;color:var(--muted);line-height:1.75;}
+
+  /* ── PROJECTS ── */
+  #projects{background:radial-gradient(ellipse 55% 55% at 15% 50%, rgba(129,140,248,.08) 0%, transparent 65%);}
+  .projects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;}
+  .project-card{
+    background:rgba(26,14,0,.88);border:1px solid var(--border);border-radius:22px;
+    padding:32px 28px;position:relative;overflow:hidden;
+    transition:all .35s ease;cursor:default;
+    opacity:0;transform:translateY(30px);
+  }
+  .project-card.revealed{opacity:1;transform:translateY(0);}
+  .project-card::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(236,72,153,.1),rgba(34,211,238,.08));
+    opacity:0;transition:opacity .4s;
+  }
+  .project-card:hover::before{opacity:1;}
+  .project-card:hover{
+    border-color:rgba(99,102,241,.45);
+    transform:translateY(-6px);
+    box-shadow:0 0 50px rgba(99,102,241,.15),0 30px 80px rgba(0,0,0,.5);
+  }
+  .project-icon{font-size:2.4rem;margin-bottom:18px;}
+  .project-title{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:12px;color:var(--white);}
+  .project-desc{font-size:.84rem;color:var(--muted);line-height:1.75;margin-bottom:20px;}
+  .project-tags{display:flex;flex-wrap:wrap;gap:8px;}
+  .project-tag{
+    font-size:.68rem;letter-spacing:1px;text-transform:uppercase;
+    padding:3px 10px;border-radius:12px;
+    background:rgba(2,132,199,.1);border:1px solid rgba(2,132,199,.25);color:var(--indigo);
+  }
+
+  /* ── EDUCATION ── */
+  #education{background:radial-gradient(ellipse 55% 55% at 80% 50%, rgba(56,189,248,.06) 0%, transparent 65%);}
+  .edu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;}
+  .edu-card{
+    background:rgba(26,14,0,.88);border:1px solid var(--border);border-radius:22px;
+    padding:32px 28px;position:relative;overflow:hidden;
+    transition:all .35s;
+    opacity:0;transform:translateY(20px);
+  }
+  .edu-card.revealed{opacity:1;transform:translateY(0);}
+  .edu-card:hover{border-color:rgba(245,158,11,.35);transform:translateY(-4px);box-shadow:0 0 40px rgba(245,158,11,.1);}
+  .edu-badge{
+    width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:1.4rem;margin-bottom:20px;
+    background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.05));
+    border:1px solid rgba(245,158,11,.25);
+  }
+  .edu-inst{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--white);margin-bottom:6px;}
+  .edu-degree{font-size:.88rem;color:var(--amber);font-weight:600;margin-bottom:8px;}
+  .edu-detail{font-size:.82rem;color:var(--muted);}
+
+  /* ── CONTACT ── */
+  #contact{background:radial-gradient(ellipse 60% 60% at 50% 100%, rgba(2,132,199,.12) 0%, transparent 65%);}
+  .contact-inner{max-width:800px;margin:0 auto;text-align:center;}
+  .contact-inner .section-label{justify-content:center;}
+  .contact-inner .section-label::before{display:none;}
+  .contact-tagline{font-size:clamp(1.2rem,2.5vw,1.6rem);color:var(--muted);margin-bottom:60px;line-height:1.6;}
+  .contact-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-bottom:50px;}
+  .contact-card{
+    background:rgba(26,14,0,.88);border:1px solid var(--border);border-radius:20px;
+    padding:28px 22px;text-align:center;transition:all .3s;
+    opacity:0;transform:translateY(20px);
+  }
+  .contact-card.revealed{opacity:1;transform:translateY(0);}
+  .contact-card:hover{border-color:rgba(2,132,199,.42);transform:translateY(-4px);box-shadow:0 0 40px var(--glow-c);}
+  .contact-card-icon{font-size:1.8rem;margin-bottom:12px;}
+  .contact-card-label{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .contact-card-val{font-size:.88rem;font-weight:600;color:var(--white);}
+  .contact-card-val a{color:inherit;text-decoration:none;transition:color .2s;}
+  .contact-card-val a:hover{color:var(--cyan);}
+  .social-links{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+  .social-btn{
+    padding:12px 28px;border-radius:30px;font-size:.82rem;font-weight:600;letter-spacing:1px;text-decoration:none;
+    border:1.5px solid var(--border);color:var(--muted);
+    transition:all .3s;display:flex;align-items:center;gap:8px;
+  }
+  .social-btn:hover{border-color:var(--pink);color:var(--pink);box-shadow:0 0 25px var(--glow-p);transform:translateY(-2px);}
+
+  /* ── FOOTER ── */
+  footer{
+    text-align:center;padding:32px;border-top:1px solid var(--border);
+    font-size:.78rem;color:var(--muted);letter-spacing:1px;
+    background:rgba(5,4,15,.9);position:relative;z-index:1;
+  }
+  footer span{color:var(--pink);}
+
+  /* ── SCROLL REVEAL ── */
+  .reveal{opacity:0;transform:translateY(30px);transition:all .75s cubic-bezier(.4,0,.2,1);}
+  .reveal.revealed{opacity:1;transform:translateY(0);}
+
+  /* ── MOBILE MENU ── */
+  /* ── PRINT / PDF STYLES ── */
+  @media print{
+    *{cursor:auto!important;}
+    #cursor,#cursor-ring,#particles,#loader,nav,.hero-btns,.social-links,
+    .nav-cta,.hamburger{display:none!important;}
+    body{background:#fff!important;color:#111!important;font-size:11pt;}
+    body::before{display:none!important;}
+    section{padding:32pt 40pt!important;page-break-inside:avoid;position:relative;z-index:1;}
+    #hero{
+      min-height:unset!important;background:#fff!important;
+      padding-top:40pt!important;flex-direction:column!important;gap:24pt!important;
+    }
+    .hero-name{
+      font-size:36pt!important;letter-spacing:-1px!important;
+      background:none!important;-webkit-text-fill-color:#111!important;color:#111!important;
+    }
+    .hero-role{color:#444!important;}
+    .hero-desc{color:#555!important;}
+    .hero-stats{
+      background:#eef6ff!important;border:1pt solid #ddd!important;
+      box-shadow:none!important;break-inside:avoid;
+    }
+    .stat-num{
+      background:none!important;-webkit-text-fill-color:#6366f1!important;color:#6366f1!important;
+    }
+    .section-title{
+      background:none!important;-webkit-text-fill-color:#111!important;color:#111!important;
+    }
+    .gradient-text{
+      background:none!important;-webkit-text-fill-color:#6366f1!important;color:#6366f1!important;
+    }
+    .section-label{color:#6366f1!important;}
+    .timeline-card,.project-card,.edu-card,.contact-card{
+      background:#f5f5ff!important;border:1pt solid #e0e0f0!important;
+      box-shadow:none!important;opacity:1!important;transform:none!important;
+      break-inside:avoid;
+    }
+    .timeline-item{opacity:1!important;transform:none!important;}
+    .tc-company{color:#111!important;}
+    .tc-role{color:#ec4899!important;}
+    .tc-desc,.tc-period,.skill-name,.chip,.about-tag{color:#444!important;}
+    .skill-track{background:#e0e0f0!important;}
+    .skill-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .chip{border:1pt solid #b0cce0!important;background:#eef6ff!important;}
+    .chip.hot{border:1pt solid #818cf8!important;background:#eef6ff!important;color:#818cf8!important;}
+    .edu-inst{color:#111!important;}
+    .edu-degree{color:#f59e0b!important;}
+    .edu-detail{color:#555!important;}
+    .contact-card-val,.contact-card-val a{color:#111!important;}
+    .timeline::before{background:#0284c7!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .timeline-dot{background:#6366f1!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .projects-grid,.edu-grid,.contact-cards{grid-template-columns:1fr 1fr!important;}
+    .skills-grid{grid-template-columns:1fr 1fr!important;}
+    .reveal,.timeline-item,.project-card,.edu-card,.contact-card{opacity:1!important;transform:none!important;}
+    h2.section-title{margin-bottom:24pt!important;}
+    @page{margin:0.6in 0.7in;size:A4;}
+  }
+
+  @media(max-width:768px){
+    .nav-links{
+      display:none;position:fixed;top:70px;left:0;right:0;
+      background:rgba(5,4,15,.97);backdrop-filter:blur(20px);
+      flex-direction:column;align-items:center;padding:32px;gap:28px;
+      border-bottom:1px solid var(--border);z-index:999;
+    }
+    .nav-links.open{display:flex;}
+    .hamburger{display:flex;}
+    .nav-cta{display:none;}
+    .skills-grid{grid-template-columns:1fr;}
+    #hero{text-align:center;}
+    .hero-btns{justify-content:center;}
+    .hero-desc{margin:0 auto 40px;}
+    .hero-stats-wrap{width:100%;}
+    .hero-stats{min-width:unset;width:100%;}
+    .tc-header{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-initials">SB</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-label">Crafting your experience...</div>
+</div>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- PARTICLES -->
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">Suyash Barge</div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#projects">Work</a></li>
+    <li><a href="#education">Education</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="#" onclick="downloadPortfolio(event)" target="_blank" rel="noopener" class="nav-cta">Preview CV ↗</a>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-content">
+    <div class="hero-badge"><span class="dot"></span>Available for new opportunities</div>
+    <h1 class="hero-name">Suyash<br>Barge</h1>
+    <p class="hero-role">Studio Manager & <span>Visual Design Expert</span><br>Jewelry Photography · Brand Design · Creative Direction</p>
+    <p class="hero-desc">15+ years crafting stunning visuals for the jewellery industry. Expert in Photoshop, brand storytelling, and leading creative teams to deliver world-class design at VD Jewels Artison Pvt Ltd.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-primary"><span>✦ Hire Me</span></a>
+      <a href="#" onclick="downloadPortfolio(event)" target="_blank" rel="noopener" class="btn-outline">Preview Resume ↗</a>
+    </div>
+  </div>
+  <div class="hero-stats-wrap">
+    <div class="hero-stats" id="statsCard">
+      <div class="stat-item">
+        <div class="stat-num">15+</div>
+        <div class="stat-label">Years Exp.</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num pink">12+</div>
+        <div class="stat-label">Tools Mastered</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-num">6</div>
+        <div class="stat-label">Companies</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num pink">10+</div>
+        <div class="stat-label">Skill Types</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-label">What I Know</div>
+  <h2 class="section-title">Skills & <span class="gradient-text">Expertise</span></h2>
+  <div class="skills-grid">
+    <div>
+      <div class="skill-group-title">Design & Photography</div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Adobe Photoshop</span><span class="skill-pct">98%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-indigo" data-w="98"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Adobe Lightroom</span><span class="skill-pct">90%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-indigo" data-w="90"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Adobe Premiere</span><span class="skill-pct">80%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-cyan" data-w="80"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">CorelDRAW</span><span class="skill-pct">82%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-cyan" data-w="82"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Jewellery Photography</span><span class="skill-pct">95%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-pink" data-w="95"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="skill-group-title">3D & Rendering</div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">KeyShot Rendering</span><span class="skill-pct">80%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-pink" data-w="80"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Matrix (Jewelry CAD)</span><span class="skill-pct">30%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-indigo" data-w="30"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Illustrator</span><span class="skill-pct">45%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-cyan" data-w="45"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">JewelCAD</span><span class="skill-pct">65%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-pink" data-w="65"></div></div>
+      </div>
+      <div class="skill-bar-wrap reveal">
+        <div class="skill-bar-header"><span class="skill-name">Wondershare / Video Editing</span><span class="skill-pct">75%</span></div>
+        <div class="skill-track"><div class="skill-fill fill-indigo" data-w="75"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="chips-section reveal">
+    <div class="skill-group-title">Photoshop Specializations</div>
+    <div class="chips">
+      <span class="chip hot">💍 Jewelry Retouching</span>
+      <span class="chip hot">🖼️ Brochure Design</span>
+      <span class="chip hot">🌐 Website Layout Design</span>
+      <span class="chip">🔷 Logo Design</span>
+      <span class="chip">🎭 Photo Manipulation</span>
+      <span class="chip hot">🧑‍🎨 Portrait Retouching</span>
+      <span class="chip">🎨 Cartoon Design</span>
+      <span class="chip">🌈 Colour Correction</span>
+      <span class="chip">✨ Creative Compositing</span>
+      <span class="chip hot">🖥️ CAD Rendering</span>
+      <span class="chip">📸 360° Product Photography</span>
+      <span class="chip">📽️ Video Shooting</span>
+      <span class="chip">📊 PowerPoint / Excel</span>
+      <span class="chip">🔥 Combustion VFX</span>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-label">Career Path</div>
+  <h2 class="section-title">Work <span class="gradient-text">Experience</span></h2>
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="tc-header">
+          <div class="tc-company">VD Jewels Artison Pvt Ltd</div>
+          <div class="tc-period">2019 — Present</div>
+        </div>
+        <div class="tc-role">Studio Manager (Head — E-Commerce & Creative)</div>
+        <div class="tc-desc">Managing the full studio department including e-commerce segment operations, banner & layout creation using CAD-rendered imagery, creative sketch presentations for international & local clients, training junior designers and videographers, and high-value jewellery photography & video production for brand promotion.</div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="tc-header">
+          <div class="tc-company">Jasani Jewellery Pvt Ltd</div>
+          <div class="tc-period">Dec 2016 — Feb 2019</div>
+        </div>
+        <div class="tc-role">Team Leader — Graphics Designer & Photographer</div>
+        <div class="tc-desc">Led the graphics and photography team. Operated Canon Mark IV 5D with 180mm Macro Lens and Canon D70 with 100mm Macro Lens & Tent lighting setup for premium jewellery shoots.</div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="tc-header">
+          <div class="tc-company">Steckbeck Jewelery Pvt Ltd</div>
+          <div class="tc-period">Dec 2016 — Feb 2017</div>
+        </div>
+        <div class="tc-role">Graphics Designer & Jewelry Photographer</div>
+        <div class="tc-desc">Handled graphic design and jewelry photography responsibilities for the brand's visual production pipeline.</div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="tc-header">
+          <div class="tc-company">Azure Jouel Pvt Ltd</div>
+          <div class="tc-period">Jun 2013 — Dec 2016</div>
+        </div>
+        <div class="tc-role">Graphics Designer & Jewellery Photographer</div>
+        <div class="tc-desc">Worked on 360° mode photo composition using Canon D60 with 100mm Macro Lens for best-in-class product imagery. Handled all graphic design requirements for the brand.</div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="tc-header">
+          <div class="tc-company">MK Jewellery</div>
+          <div class="tc-period">2012 — 2013</div>
+        </div>
+        <div class="tc-role">Graphics Designer & Jewelry Editor</div>
+        <div class="tc-desc">Managed graphic design, jewellery editing, and photography for the brand's marketing and catalogue materials.</div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-card">
+        <div class="tc-header">
+          <div class="tc-company">Rich Digital Colour Lab</div>
+          <div class="tc-period">2010 — 2012</div>
+        </div>
+        <div class="tc-role">Graphics Designer</div>
+        <div class="tc-desc">Began professional career as a Graphics Designer, building a strong foundation in digital design, colour theory, and retouching techniques over 2 years.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PROJECTS / WORK -->
+<section id="projects">
+  <div class="section-label">Creative Work</div>
+  <h2 class="section-title">Featured <span class="gradient-text">Projects</span></h2>
+  <div class="projects-grid">
+
+    <div class="project-card">
+      <div class="project-icon">💍</div>
+      <div class="project-title">Jewellery Retouching & Photography</div>
+      <div class="project-desc">High-end retouching of fine jewellery for e-commerce platforms and brand catalogues. Precision lighting, shadow work, and colour accuracy for diamonds, gold, and precious stones.</div>
+      <div class="project-tags">
+        <span class="project-tag">Photoshop</span>
+        <span class="project-tag">Lightroom</span>
+        <span class="project-tag">Canon 5D MkIV</span>
+        <span class="project-tag">Macro Lens</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-icon">🌐</div>
+      <div class="project-title">E-Commerce Banner & Layout Design</div>
+      <div class="project-desc">Creating responsive banner layouts using CAD-rendered jewellery images for international and domestic e-commerce platforms, maintaining brand consistency across all digital touchpoints.</div>
+      <div class="project-tags">
+        <span class="project-tag">Photoshop</span>
+        <span class="project-tag">Keyshot</span>
+        <span class="project-tag">Matrix CAD</span>
+        <span class="project-tag">JewelCAD</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-icon">🖼️</div>
+      <div class="project-title">Brand Identity & Brochure Design</div>
+      <div class="project-desc">Full-suite brochure and brand identity design for jewellery collections — from concept sketches to final print-ready files, delivering premium aesthetics aligned with luxury brand positioning.</div>
+      <div class="project-tags">
+        <span class="project-tag">Photoshop</span>
+        <span class="project-tag">CorelDRAW</span>
+        <span class="project-tag">Lightroom</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-icon">🎬</div>
+      <div class="project-title">Product Video Production</div>
+      <div class="project-desc">Video shooting and editing of high-value jewellery with creative props styling for brand promotion campaigns. Training team members in video production workflows for reels and marketing content.</div>
+      <div class="project-tags">
+        <span class="project-tag">Adobe Premiere</span>
+        <span class="project-tag">Wondershare</span>
+        <span class="project-tag">Combustion</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-icon">🔮</div>
+      <div class="project-title">360° Product Composition</div>
+      <div class="project-desc">Specialised 360° jewellery photography using mode photo composer with Canon D60 and 100mm macro lens for immersive product presentations and interactive online showcases.</div>
+      <div class="project-tags">
+        <span class="project-tag">360° Photography</span>
+        <span class="project-tag">Canon D60</span>
+        <span class="project-tag">Photoshop</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-icon">🎓</div>
+      <div class="project-title">Team Training & Mentorship</div>
+      <div class="project-desc">Developed and delivered in-house training programs for junior designers and photographers in jewellery retouching, video editing, and professional studio best practices at VD Jewels Artison.</div>
+      <div class="project-tags">
+        <span class="project-tag">Leadership</span>
+        <span class="project-tag">Quality Control</span>
+        <span class="project-tag">Studio Mgmt</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-label">Qualifications</div>
+  <h2 class="section-title">Education & <span class="gradient-text">Certifications</span></h2>
+  <div class="edu-grid">
+
+    <div class="edu-card">
+      <div class="edu-badge">🎓</div>
+      <div class="edu-inst">Kokane's Kohinoor Technical Institute</div>
+      <div class="edu-degree">Diploma in Multimedia</div>
+      <div class="edu-detail">Professional qualification in multimedia design, covering digital arts, animation, and graphic design fundamentals.</div>
+    </div>
+
+    <div class="edu-card">
+      <div class="edu-badge">📚</div>
+      <div class="edu-inst">Secondary Schooling</div>
+      <div class="edu-degree">10th Standard (SSC)</div>
+      <div class="edu-detail">Completed secondary education with a strong foundation in core subjects.</div>
+    </div>
+
+    <div class="edu-card">
+      <div class="edu-badge">💻</div>
+      <div class="edu-inst">Self-Developed Expertise</div>
+      <div class="edu-degree">IT — Hardware & Software</div>
+      <div class="edu-detail">Basic knowledge of software installation and hardware maintenance in the IT field, enabling self-sufficient studio management.</div>
+    </div>
+
+    <div class="edu-card">
+      <div class="edu-badge">🌐</div>
+      <div class="edu-inst">Languages</div>
+      <div class="edu-degree">Trilingual Professional</div>
+      <div class="edu-detail">Fluent in <strong style="color:var(--white)">English</strong>, <strong style="color:var(--white)">Hindi</strong>, and <strong style="color:var(--white)">Marathi</strong> — enabling seamless communication with diverse clients and teams.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner">
+    <div class="section-label">Get In Touch</div>
+    <h2 class="section-title">Let's <span class="gradient-text">Connect</span></h2>
+    <p class="contact-tagline">Have a project in mind? Looking for a creative studio head? I'd love to hear from you. Let's create something extraordinary together.</p>
+
+    <div class="contact-cards">
+      <a href="https://wa.me/919821491041" target="_blank" rel="noopener" class="contact-card" style="text-decoration:none;display:block;">
+        <div class="contact-card-icon">📞</div>
+        <div class="contact-card-label">Phone</div>
+        <div class="contact-card-val">+91 98214 91041</div>
+      </a>
+      <a href="https://mail.google.com/mail/?view=cm&to=Suyashbarge1127@gmail.com" target="_blank" rel="noopener" class="contact-card" style="text-decoration:none;display:block;">
+        <div class="contact-card-icon">✉️</div>
+        <div class="contact-card-label">Email</div>
+        <div class="contact-card-val">Suyashbarge1127@gmail.com</div>
+      </a>
+      <a href="https://maps.app.goo.gl/F1NGu2PDPKsNiCtT6" target="_blank" rel="noopener" class="contact-card" style="text-decoration:none;display:block;">
+        <div class="contact-card-icon">📍</div>
+        <div class="contact-card-label">Location</div>
+        <div class="contact-card-val">Badlapur East, Thane 421503</div>
+      </a>
+      <div class="contact-card">
+        <div class="contact-card-icon">🌍</div>
+        <div class="contact-card-label">Nationality</div>
+        <div class="contact-card-val">Indian 🇮🇳</div>
+      </div>
+    </div>
+
+    <div class="social-links">
+      <a href="https://www.instagram.com/azurejouel/" target="_blank" class="social-btn">📸 Instagram Portfolio</a>
+      <a href="https://www.facebook.com/vdartisonpvt" target="_blank" class="social-btn">👍 Facebook Page</a>
+      <a href="#" onclick="downloadPortfolio(event)" target="_blank" rel="noopener" class="social-btn">📄 Preview Resume ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Designed & built with <span>♥</span> · Suyash Barge © 2025 · Studio Manager & Visual Designer</p>
+</footer>
+
+<script>
+// ── DOWNLOAD PORTFOLIO AS PDF ──
+function downloadPortfolio(e) {
+  if(e) e.preventDefault();
+  // Reveal all hidden elements before printing
+  document.querySelectorAll('.reveal,.timeline-item,.project-card,.edu-card,.contact-card').forEach(el => {
+    el.classList.add('revealed');
+  });
+  document.querySelectorAll('.skill-fill[data-w]').forEach(bar => {
+    bar.style.width = bar.dataset.w + '%';
+  });
+  setTimeout(() => {
+    window.print();
+  }, 300);
+}
+
+// ── LOADER ──
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+  }, 2200);
+});
+
+// ── CURSOR ──
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx + 'px'; cursor.style.top = my + 'px'; });
+(function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animateRing);
+})();
+document.querySelectorAll('a,button,.project-card,.timeline-card,.edu-card,.contact-card').forEach(el => {
+  el.addEventListener('mouseenter', () => { cursor.style.transform = 'translate(-50%,-50%) scale(2)'; ring.style.transform = 'translate(-50%,-50%) scale(1.5)'; ring.style.opacity = '.4'; });
+  el.addEventListener('mouseleave', () => { cursor.style.transform = 'translate(-50%,-50%) scale(1)'; ring.style.transform = 'translate(-50%,-50%) scale(1)'; ring.style.opacity = '1'; });
+});
+
+// ── SMOOTH SCROLL HELPER ──
+function smoothTo(e, id) {
+  e.preventDefault();
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  navLinks.classList.remove('open');
+}
+// Wire all nav links
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = a.getAttribute('href').replace('#','');
+    smoothTo(e, target);
+  });
+});
+const navLinks = document.getElementById('navLinks');
+hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
+// ── PARTICLES ──
+(function(){
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let W, H, pts = [];
+  const COLORS = ['rgba(99,102,241,.7)', 'rgba(236,72,153,.5)', 'rgba(34,211,238,.6)', 'rgba(124,58,237,.5)'];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function rand(a,b){ return a + Math.random() * (b - a); }
+  function init(){
+    pts = [];
+    const N = Math.min(100, Math.floor(W * H / 12000));
+    for(let i = 0; i < N; i++){
+      pts.push({
+        x: rand(0, W), y: rand(0, H),
+        vx: rand(-.35, .35), vy: rand(-.35, .35),
+        r: rand(1.5, 3),
+        c: COLORS[Math.floor(rand(0, COLORS.length))]
+      });
+    }
+  }
+  let mouse = { x: -9999, y: -9999 };
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if(p.x < 0 || p.x > W) p.vx *= -1;
+      if(p.y < 0 || p.y > H) p.vy *= -1;
+      // mouse repel
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if(dist < 100){ const force = (100 - dist) / 100; p.vx += dx / dist * force * .04; p.vy += dy / dist * force * .04; }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.c; ctx.fill();
+    });
+    for(let i = 0; i < pts.length; i++){
+      for(let j = i + 1; j < pts.length; j++){
+        const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if(d < 130){
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.strokeStyle = `rgba(99,102,241,${.15 * (1 - d/130)})`;
+          ctx.lineWidth = .7;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', () => { resize(); init(); });
+  resize(); init(); draw();
+})();
+
+// ── 3D TILT ──
+const statsCard = document.getElementById('statsCard');
+statsCard && statsCard.addEventListener('mousemove', e => {
+  const rect = statsCard.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const rx2 = ((e.clientY - cy) / (rect.height / 2)) * -8;
+  const ry2 = ((e.clientX - cx) / (rect.width / 2)) * 8;
+  statsCard.style.transform = `perspective(800px) rotateX(${rx2}deg) rotateY(${ry2}deg)`;
+});
+statsCard && statsCard.addEventListener('mouseleave', () => {
+  statsCard.style.transform = 'perspective(800px) rotateX(0) rotateY(0)';
+});
+
+// ── SCROLL REVEAL ──
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      entry.target.classList.add('revealed');
+      // skill bars
+      entry.target.querySelectorAll('.skill-fill[data-w]').forEach(bar => {
+        setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 100);
+      });
+      // single bar
+      if(entry.target.classList.contains('skill-bar-wrap')){
+        const bar = entry.target.querySelector('.skill-fill[data-w]');
+        if(bar) setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 100);
+      }
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.reveal,.timeline-item,.project-card,.edu-card,.contact-card').forEach(el => io.observe(el));
+
+// ── TIMELINE AUTO REVEAL for skill group ──
+const skillSectionIO = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      entry.target.querySelectorAll('.skill-fill[data-w]').forEach((bar, i) => {
+        setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 200 + i * 120);
+      });
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('#skills .skills-grid').forEach(el => skillSectionIO.observe(el));
+
+// ── SMOOTH NAV HIDE/SHOW ──
+let lastY = 0;
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  nav.style.transform = y > lastY && y > 100 ? 'translateY(-100%)' : 'translateY(0)';
+  lastY = y;
+});
+</script>
+</body>
+</html>
